@@ -4,6 +4,13 @@
 
 O QuizColetivo é um aplicativo de quiz multiplayer em tempo real, projetado para permitir que administradores configurem e gerenciem jogos de quiz, enquanto os jogadores participam e respondem a perguntas geradas por IA.
 
+## Configuração do Ambiente de Backend
+
+*   **Vinculação com o Supabase**: O projeto local foi vinculado a um projeto Supabase.
+*   **Deploy da Edge Function**: A Edge Function `generate-quiz-questions` foi implantada com sucesso no Supabase.
+*   **Criação das Tabelas do Banco de Dados**: As tabelas `games`, `players`, `questions`, e `player_answers` foram criadas no banco de dados do Supabase.
+*   **Habilitação do Realtime**: A replicação em tempo real foi habilitada para as tabelas do banco de dados.
+
 ## Funcionalidades Implementadas
 
 ### 1. Interface do Usuário (Frontend)
