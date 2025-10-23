@@ -1,0 +1,100 @@
+4:34:55 PM: build-image version: 7aa2b696d8640ee8ab8ada4b1f870982d7bd596d (noble)
+4:34:55 PM: buildbot version: 11482adeb7bc8b39b970c0c529cdaed99bb59394
+4:34:56 PM: Fetching cached dependencies
+4:34:56 PM: Starting to download cache of 199.8MB (Last modified: 2025-10-23 02:42:50 +0000 UTC)
+4:34:56 PM: Finished downloading cache in 640ms
+4:34:56 PM: Starting to extract cache
+4:34:59 PM: Finished extracting cache in 2.206s
+4:34:59 PM: Finished fetching cache in 2.902s
+4:34:59 PM: Starting to prepare the repo for build
+4:34:59 PM: Preparing Git Reference refs/heads/main
+4:35:00 PM: Starting to install dependencies
+4:35:00 PM: Started restoring cached python cache
+4:35:01 PM: Finished restoring cached python cache
+4:35:01 PM: Started restoring cached ruby cache
+4:35:01 PM: Finished restoring cached ruby cache
+4:35:02 PM: Started restoring cached go cache
+4:35:02 PM: Finished restoring cached go cache
+4:35:03 PM: v22.21.0 is already installed.
+4:35:03 PM: Now using node v22.21.0 (npm v10.9.4)
+4:35:03 PM: Enabling Node.js Corepack
+4:35:03 PM: Started restoring cached build plugins
+4:35:03 PM: Finished restoring cached build plugins
+4:35:03 PM: Started restoring cached corepack dependencies
+4:35:03 PM: Finished restoring cached corepack dependencies
+4:35:03 PM: No npm workspaces detected
+4:35:03 PM: Started restoring cached node modules
+4:35:03 PM: Finished restoring cached node modules
+4:35:03 PM: Installing npm packages using npm version 10.9.4
+4:35:04 PM: added 29 packages in 1s
+4:35:05 PM: npm packages installed
+4:35:05 PM: Successfully installed dependencies
+4:35:05 PM: Starting build script
+4:35:05 PM: Detected 1 framework(s)
+4:35:05 PM: "vite" at version "6.4.1"
+4:35:05 PM: Section completed: initializing
+4:35:07 PM: ​
+4:35:07 PM: Netlify Build                                                 
+4:35:07 PM: ────────────────────────────────────────────────────────────────
+4:35:07 PM: ​
+4:35:07 PM: ❯ Version
+4:35:07 PM:   @netlify/build 35.2.7
+4:35:07 PM: ​
+4:35:07 PM: ❯ Flags
+4:35:07 PM:   accountId: 68a3af75fcc40b3dea9c68ff
+4:35:07 PM:   baseRelDir: true
+4:35:07 PM:   buildId: 68fa835e34ef770008257b1a
+4:35:07 PM:   deployId: 68fa835e34ef770008257b1c
+4:35:07 PM: ​
+4:35:07 PM: ❯ Current directory
+4:35:07 PM:   /opt/build/repo
+4:35:07 PM: ​
+4:35:07 PM: ❯ Config file
+4:35:07 PM:   No config file was defined: using default values.
+4:35:07 PM: ​
+4:35:07 PM: ❯ Context
+4:35:07 PM:   production
+4:35:07 PM: ​
+4:35:07 PM: Build command from Netlify app                                
+4:35:07 PM: ────────────────────────────────────────────────────────────────
+4:35:07 PM: ​
+4:35:07 PM: $ npm run build
+4:35:07 PM: > gemini-real-time-quiz@0.0.0 build
+4:35:07 PM: > vite build
+4:35:07 PM: vite v6.4.1 building for production...
+4:35:07 PM: /index.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
+transforming...
+4:35:07 PM: ✓ 8 modules transformed.
+4:35:07 PM: ✗ Build failed in 101ms
+4:35:07 PM: error during build:
+4:35:07 PM: Could not resolve "./supabaseClient" from "App.tsx"
+4:35:07 PM: file: /opt/build/repo/App.tsx
+4:35:07 PM:     at getRollupError (file:///opt/build/repo/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+4:35:07 PM:     at error (file:///opt/build/repo/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+4:35:07 PM:     at ModuleLoader.handleInvalidResolvedId (file:///opt/build/repo/node_modules/rollup/dist/es/shared/node-entry.js:21565:24)
+4:35:07 PM:     at file:///opt/build/repo/node_modules/rollup/dist/es/shared/node-entry.js:21525:26
+4:35:07 PM: ​
+4:35:07 PM: "build.command" failed                                        
+4:35:07 PM: ────────────────────────────────────────────────────────────────
+4:35:07 PM: ​
+4:35:07 PM:   Error message
+4:35:07 PM:   Command failed with exit code 1: npm run build (https://ntl.fyi/exit-code-1)
+4:35:07 PM: ​
+4:35:07 PM:   Error location
+4:35:07 PM:   In Build command from Netlify app:
+4:35:07 PM:   npm run build
+4:35:07 PM: ​
+4:35:07 PM:   Resolved config
+4:35:07 PM:   build:
+4:35:07 PM:     command: npm run build
+4:35:07 PM:     commandOrigin: ui
+4:35:07 PM:     environment:
+4:35:07 PM:       - VITE_OPENROUTER_API_KEY
+4:35:07 PM:       - VITE_SUPABASE_ANON_KEY
+4:35:07 PM:       - VITE_SUPABASE_URL
+4:35:07 PM:     publish: /opt/build/repo/dist
+4:35:07 PM:     publishOrigin: ui
+4:35:08 PM: Failed during stage 'building site': Build script returned non-zero exit code: 2 (https://ntl.fyi/exit-code-2)
+4:35:08 PM: Build failed due to a user error: Build script returned non-zero exit code: 2
+4:35:08 PM: Failing build: Failed to build site
+4:35:08 PM: Finished processing build request in 12.416s

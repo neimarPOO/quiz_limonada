@@ -5,7 +5,7 @@ import AdminDashboard from './components/AdminDashboard';
 import PlayerView from './components/PlayerView';
 import PublicDashboard from './components/PublicDashboard';
 import AdminLogin from './components/AdminLogin';
-import { supabase } from './supabaseClient';
+import { supabase } from './src/supabaseClient';
 
 const initialState: LocalGameState = {
     game: null,
