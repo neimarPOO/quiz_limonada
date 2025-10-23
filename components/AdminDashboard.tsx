@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../App';
 import { GameStatus, Game, Player, Question } from '../types';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../src/supabaseClient';
 import { generateQuizQuestions } from '../services/apiService';
 
 const LogoIcon = () => (
