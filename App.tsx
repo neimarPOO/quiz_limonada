@@ -1,124 +1,132 @@
-import React, { createContext, useReducer, useContext, ReactNode } from 'react';
+import React, { createContext, useReducer, useContext, ReactNode, useEffect, useRef } from 'react';
 import { HashRouter, Routes, Route, Link } from 'react-router-dom';
-import { GameState, GameAction, GameStatus, Player } from './types';
+import { LocalGameState, GameAction, GameStatus, Game, Player, Question, PlayerAnswer } from './types';
 import AdminDashboard from './components/AdminDashboard';
 import PlayerView from './components/PlayerView';
 import PublicDashboard from './components/PublicDashboard';
+import AdminLogin from './components/AdminLogin';
+import { supabase } from './supabaseClient';
 
-const initialState: GameState = {
-    status: GameStatus.CONFIG,
+const initialState: LocalGameState = {
+    game: null,
     players: [],
     questions: [],
-    currentQuestionIndex: 0,
-    countdown: 5,
-    config: {
-        numberOfQuestions: 10,
-        category: 'Tecnologia',
-        source: 'AI',
-        tieBreaker: 'time',
-    },
-    playerAnswers: {},
-    previousStatus: undefined,
+    playerAnswers: [],
+    isAdminAuthenticated: false,
+    localPlayerId: null,
 };
 
-const gameReducer = (state: GameState, action: GameAction): GameState => {
+const gameReducer = (state: LocalGameState, action: GameAction): LocalGameState => {
     switch (action.type) {
-        case 'SET_CONFIG':
-            return { ...state, config: action.payload };
-        case 'START_GAME':
-            return {
-                ...state,
-                questions: action.payload,
-                status: GameStatus.COUNTDOWN,
-                currentQuestionIndex: 0,
-                countdown: 5,
-                playerAnswers: {},
-                players: state.players.map(p => ({ ...p, score: 0 }))
-            };
-        case 'START_COUNTDOWN':
-             return { ...state, status: GameStatus.COUNTDOWN, countdown: 5 };
-        case 'TICK_COUNTDOWN':
-            return { ...state, countdown: state.countdown - 1 };
-        case 'SHOW_QUESTION':
-            return { ...state, status: GameStatus.QUESTION, countdown: 20, playerAnswers: {} };
-        case 'PLAYER_ANSWER': {
-            const { playerId, answer, time } = action.payload;
-            const question = state.questions[state.currentQuestionIndex];
-            const isCorrect = answer === question.correctAnswer;
-            const score = isCorrect ? 100 + Math.max(0, 20 - Math.floor(time)) : 0; // Points for speed
-
-            return {
-                ...state,
-                players: state.players.map(p =>
-                    p.id === playerId ? { ...p, score: p.score + score } : p
-                ),
-                playerAnswers: {
-                    ...state.playerAnswers,
-                    [playerId]: { answer, time, score },
-                }
-            };
-        }
-        case 'SHOW_RESULTS':
-            return {
-                ...state,
-                status: GameStatus.ROUND_END,
-                countdown: 5,
-                currentCorrectAnswer: state.questions[state.currentQuestionIndex].correctAnswer
-            };
-        case 'NEXT_QUESTION':
-            if (state.currentQuestionIndex < state.questions.length - 1) {
-                return {
-                    ...state,
-                    currentQuestionIndex: state.currentQuestionIndex + 1,
-                    status: GameStatus.COUNTDOWN,
-                    countdown: 5,
-                    playerAnswers: {},
-                    currentCorrectAnswer: undefined,
-                };
-            }
-            return { ...state, status: GameStatus.GAME_END };
-        case 'PAUSE_GAME':
-            return { 
-                ...state, 
-                status: GameStatus.PAUSED,
-                previousStatus: state.status, // Save the current status
-            };
-        case 'RESUME_GAME':
-            return { 
-                ...state, 
-                status: state.previousStatus || GameStatus.QUESTION, // Restore previous status
-                previousStatus: undefined,
-            };
-        case 'END_GAME':
-             return { ...state, status: GameStatus.GAME_END };
-        case 'ADD_PLAYER':
-            // Avoid adding player if ID already exists
-            if (state.players.find(p => p.id === action.payload.id)) {
-                return state;
-            }
-            return { ...state, players: [...state.players, action.payload] };
-        case 'RESET_GAME':
-            return {
-                ...initialState,
-                players: state.players,
-                config: state.config,
-             };
+        case 'SET_GAME':
+            return { ...state, game: action.payload };
+        case 'SET_PLAYERS':
+            return { ...state, players: action.payload };
+        case 'SET_QUESTIONS':
+            return { ...state, questions: action.payload };
+        case 'SET_PLAYER_ANSWERS':
+            return { ...state, playerAnswers: action.payload };
+        case 'ADMIN_LOGIN':
+            return { ...state, isAdminAuthenticated: true };
+        case 'SET_LOCAL_PLAYER_ID':
+            return { ...state, localPlayerId: action.payload };
         default:
             return state;
     }
 };
 
-const GameContext = createContext<{ state: GameState; dispatch: React.Dispatch<GameAction> }>({
-    state: initialState,
-    dispatch: () => null,
-});
+const GameContext = createContext<{ state: LocalGameState; dispatch: React.Dispatch<GameAction> }>(
+    { state: initialState, dispatch: () => null }
+);
 
 export const useGame = () => useContext(GameContext);
 
-// FIX: Made the 'children' prop optional to resolve a TypeScript error.
-// In modern React type definitions (like PropsWithChildren), 'children' is often optional.
 const GameProvider = ({ children }: { children?: ReactNode }) => {
     const [state, dispatch] = useReducer(gameReducer, initialState);
+    const gameChannel = useRef<any>(null);
+
+    // Effect to handle initial data fetch and Realtime subscriptions
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            // For simplicity, we'll assume a single game for now, or fetch by room_code
+            // In a real app, you'd fetch the specific game the user is trying to join
+            const { data: games, error: gameError } = await supabase
+                .from('games')
+                .select('*, players(*), questions(*), player_answers(*)')
+                .limit(1);
+
+            if (gameError) {
+                console.error("Error fetching initial game data:", gameError);
+                return;
+            }
+
+            if (games && games.length > 0) {
+                const gameData = games[0];
+                dispatch({ type: 'SET_GAME', payload: gameData });
+                dispatch({ type: 'SET_PLAYERS', payload: gameData.players || [] });
+                dispatch({ type: 'SET_QUESTIONS', payload: gameData.questions || [] });
+                dispatch({ type: 'SET_PLAYER_ANSWERS', payload: gameData.player_answers || [] });
+            }
+        };
+
+        fetchInitialData();
+
+        // Setup Realtime subscriptions
+        gameChannel.current = supabase.channel('game_room')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'games' }, payload => {
+                console.log('Change received!', payload);
+                if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+                    dispatch({ type: 'SET_GAME', payload: payload.new as Game });
+                } else if (payload.eventType === 'DELETE') {
+                    dispatch({ type: 'SET_GAME', payload: null });
+                }
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, payload => {
+                console.log('Player change received!', payload);
+                if (payload.eventType === 'INSERT') {
+                    dispatch({ type: 'SET_PLAYERS', payload: [...state.players, payload.new as Player] });
+                } else if (payload.eventType === 'UPDATE') {
+                    dispatch({ type: 'SET_PLAYERS', payload: state.players.map(p => p.id === (payload.new as Player).id ? (payload.new as Player) : p) });
+                } else if (payload.eventType === 'DELETE') {
+                    dispatch({ type: 'SET_PLAYERS', payload: state.players.filter(p => p.id !== (payload.old as Player).id) });
+                }
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'questions' }, payload => {
+                console.log('Question change received!', payload);
+                if (payload.eventType === 'INSERT') {
+                    dispatch({ type: 'SET_QUESTIONS', payload: [...state.questions, payload.new as Question] });
+                } else if (payload.eventType === 'UPDATE') {
+                    dispatch({ type: 'SET_QUESTIONS', payload: state.questions.map(q => q.id === (payload.new as Question).id ? (payload.new as Question) : q) });
+                } else if (payload.eventType === 'DELETE') {
+                    dispatch({ type: 'SET_QUESTIONS', payload: state.questions.filter(q => q.id !== (payload.old as Question).id) });
+                }
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'player_answers' }, payload => {
+                console.log('Player Answer change received!', payload);
+                if (payload.eventType === 'INSERT') {
+                    dispatch({ type: 'SET_PLAYER_ANSWERS', payload: [...state.playerAnswers, payload.new as PlayerAnswer] });
+                } else if (payload.eventType === 'UPDATE') {
+                    dispatch({ type: 'SET_PLAYER_ANSWERS', payload: state.playerAnswers.map(pa => pa.id === (payload.new as PlayerAnswer).id ? (payload.new as PlayerAnswer) : pa) });
+                } else if (payload.eventType === 'DELETE') {
+                    dispatch({ type: 'SET_PLAYER_ANSWERS', payload: state.playerAnswers.filter(pa => pa.id !== (payload.old as PlayerAnswer).id) });
+                }
+            })
+            .subscribe();
+
+        // Check for local player ID in session storage
+        const storedPlayer = sessionStorage.getItem('quizPlayer');
+        if (storedPlayer) {
+            const player = JSON.parse(storedPlayer);
+            dispatch({ type: 'SET_LOCAL_PLAYER_ID', payload: player.id });
+        }
+
+        return () => {
+            if (gameChannel.current) {
+                supabase.removeChannel(gameChannel.current);
+            }
+        };
+    }, [state.players]); // Dependency on state.players to update player list correctly on changes
+
     return <GameContext.Provider value={{ state, dispatch }}>{children}</GameContext.Provider>;
 };
 
@@ -130,16 +138,18 @@ const Nav = () => (
         <span className="text-white/30">|</span>
         <Link to="/dashboard" className="text-white hover:text-primary px-3 py-1 rounded transition-colors">Dashboard</Link>
     </nav>
-)
+);
 
 const App = () => {
+    const { state } = useGame();
+
     return (
         <GameProvider>
             <HashRouter>
                 <Nav />
                 <Routes>
                     <Route path="/" element={<PlayerView />} />
-                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin" element={state.isAdminAuthenticated ? <AdminDashboard /> : <AdminLogin />} />
                     <Route path="/dashboard" element={<PublicDashboard />} />
                 </Routes>
             </HashRouter>

@@ -1,16 +1,50 @@
+export interface Game {
+    id: string;
+    room_code: string;
+    status: GameStatus;
+    current_question_index: number;
+    countdown: number;
+    config_number_of_questions: number;
+    config_category: string;
+    config_source: 'AI' | 'Manual';
+    config_tie_breaker: 'time' | 'quick_question';
+    admin_user_id?: string;
+    created_at: string;
+    updated_at: string;
+}
 
 export interface Player {
     id: string;
+    game_id: string;
     name: string;
     avatar: string;
     score: number;
-    isOnline: boolean;
+    is_online: boolean;
+    session_id?: string;
+    created_at: string;
+    updated_at: string;
 }
 
-export interface QuizQuestion {
-    question: string;
+export interface Question {
+    id: string;
+    game_id: string;
+    question_text: string;
     options: string[];
-    correctAnswer: string;
+    correct_answer: string;
+    order_index: number;
+    created_at: string;
+}
+
+export interface PlayerAnswer {
+    id: string;
+    player_id: string;
+    question_id: string;
+    game_id: string;
+    answer_chosen: string;
+    time_taken?: number;
+    is_correct?: boolean;
+    score_awarded: number;
+    created_at: string;
 }
 
 export enum GameStatus {
@@ -23,38 +57,20 @@ export enum GameStatus {
     GAME_END = 'GAME_END',
 }
 
-export interface QuizConfig {
-    numberOfQuestions: number;
-    category: string;
-    source: 'AI' | 'Manual';
-    tieBreaker: 'time' | 'quick_question';
-}
-
-export interface GameState {
-    status: GameStatus;
+// Simplified GameState for local React context, reflecting what's fetched from Supabase
+export interface LocalGameState {
+    game: Game | null;
     players: Player[];
-    questions: QuizQuestion[];
-    currentQuestionIndex: number;
-    countdown: number;
-    config: QuizConfig;
-    roomCode: string;
-    playerAnswers: { [playerId: string]: { answer: string; time: number; score: number } | null };
-    currentCorrectAnswer?: string;
-    previousStatus?: GameStatus;
+    questions: Question[];
+    playerAnswers: PlayerAnswer[];
+    isAdminAuthenticated: boolean;
+    localPlayerId: string | null; // To identify the current user's player ID
 }
 
 export type GameAction =
-    | { type: 'SET_CONFIG'; payload: QuizConfig }
-    | { type: 'START_GAME'; payload: QuizQuestion[] }
-    | { type: 'START_COUNTDOWN' }
-    | { type: 'TICK_COUNTDOWN' }
-    | { type: 'SHOW_QUESTION' }
-    | { type: 'PLAYER_ANSWER'; payload: { playerId: string; answer: string; time: number } }
-    | { type: 'SHOW_RESULTS' }
-    | { type: 'NEXT_QUESTION' }
-    | { type: 'PAUSE_GAME' }
-    | { type: 'RESUME_GAME' }
-    | { type: 'END_GAME' }
-    | { type: 'RESET_GAME' }
-    | { type: 'ADD_PLAYER'; payload: Player }
-    | { type: 'UPDATE_PLAYER_STATUS'; payload: { playerId: string; isOnline: boolean } };
+    | { type: 'SET_GAME'; payload: Game | null }
+    | { type: 'SET_PLAYERS'; payload: Player[] }
+    | { type: 'SET_QUESTIONS'; payload: Question[] }
+    | { type: 'SET_PLAYER_ANSWERS'; payload: PlayerAnswer[] }
+    | { type: 'ADMIN_LOGIN' }
+    | { type: 'SET_LOCAL_PLAYER_ID'; payload: string | null };

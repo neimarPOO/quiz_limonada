@@ -35,6 +35,15 @@ const WaitingRoom = () => {
         dispatch({ type: 'ADD_PLAYER', payload: newPlayer });
     };
 
+    const handleLeaveGame = () => {
+        if (localPlayer) {
+            sessionStorage.removeItem('quizPlayer');
+            dispatch({ type: 'REMOVE_PLAYER', payload: { playerId: localPlayer.id } });
+            setLocalPlayer(null);
+            setPlayerName('');
+        }
+    };
+
     // If player has not joined yet, show the join form
     if (!localPlayer) {
         return (
@@ -85,6 +94,12 @@ const WaitingRoom = () => {
                         </div>
                     ))}
                 </div>
+                <button 
+                    onClick={handleLeaveGame}
+                    className="mt-4 w-full h-12 bg-red-500/80 text-white font-bold rounded-lg hover:bg-red-500 transition-colors"
+                >
+                    Sair do Jogo
+                </button>
             </div>
              <footer className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center text-gray-400 text-lg">
                 Acesse com o código: <span className="font-bold text-white tracking-widest">{state.roomCode}</span>

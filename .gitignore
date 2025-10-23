@@ -1,0 +1,39 @@
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+
+# dotenv environment variables
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.bak
+
+# Build artifacts
+dist/
+build/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Supabase specific files that are generated and do not need to be tracked
+# Unless explicitly specified in the project requirements to be tracked.
+# supabase/functions/generate-quiz-questions/index.ts is already in use and needs to be tracked.
+# supabase/migrations/*
+# .supabase/
+
