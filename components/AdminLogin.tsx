@@ -8,13 +8,19 @@ const AdminLogin = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Hardcoded credentials as per requirement
-        if (username === 'admin' && password === 'pobresservos') {
+        setError(null);
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: username,
+            password: password,
+        });
+
+        if (error) {
+            setError(error.message);
+        } else if (data.user) {
             dispatch({ type: 'ADMIN_LOGIN' });
-        } else {
-            setError('Credenciais inválidas.');
         }
     };
 

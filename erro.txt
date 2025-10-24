@@ -1,3 +1,23 @@
+index-DR9LNRe3.js:99 No room code provided!
+(anonymous)	@	index-DR9LNRe3.js:99
 
-index-BiCSSHDS.js:99 No room code provided!
-(anonymous)	@	index-BiCSSHDS.js:99
+whhqswsoqztgtlxtrxvy…v1/games?select=*:1 
+ Failed to load resource: the server responded with a status of 401 ()
+index-DR9LNRe3.js:99 Error creating new game: 
+Object
+code
+: 
+"42501"
+details
+: 
+null
+hint
+: 
+null
+message
+: 
+"new row violates row-level security policy for table \"games\""
+[[Prototype]]
+: 
+Object
+C	@	index-DR9LNRe3.js:99

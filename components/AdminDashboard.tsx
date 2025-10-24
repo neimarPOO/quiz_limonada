@@ -240,13 +240,21 @@ const AdminDashboard = () => {
         const handleCreateNewGame = async () => {
             setIsLoading(true);
             setError(null);
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setError("Você precisa estar logado para criar um jogo.");
+                setIsLoading(false);
+                return;
+            }
+
             const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase(); // Simple room code
             const { data, error: insertError } = await supabase
                 .from('games')
                 .insert({
                     room_code: roomCode,
                     status: GameStatus.CONFIG,
-                    admin_user_id: state.localPlayerId, // Assuming admin is logged in as a player for now
+                    admin_user_id: user.id,
                 })
                 .select();
             if (insertError) {
