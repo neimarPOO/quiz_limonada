@@ -1,43 +1,78 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../App';
 import { GameStatus, Player } from '../types';
+import { supabase } from '../src/supabaseClient';
+
+const useQuery = () => {
+    return new URLSearchParams(useLocation().search);
+}
 
 const WaitingRoom = () => {
     const { state, dispatch } = useGame();
     const [playerName, setPlayerName] = useState('');
     const [localPlayer, setLocalPlayer] = useState<Player | null>(null);
+    const navigate = useNavigate();
+    const query = useQuery();
+    const roomCode = query.get('roomCode');
 
     useEffect(() => {
-        // Check if player data is already in session storage
-        const storedPlayer = sessionStorage.getItem('quizPlayer');
+        if (!roomCode) {
+            // Maybe navigate to an error page or a page to enter the room code
+            console.error("No room code provided!");
+            // For now, we can just log it, but a better user experience is needed.
+        }
+
+        const storedPlayer = sessionStorage.getItem(`quizPlayer_${roomCode}`);
         if (storedPlayer) {
             const player: Player = JSON.parse(storedPlayer);
             setLocalPlayer(player);
-            // Add player to game state if not already there
+            // Ensure player is in the global state if they reconnect
             dispatch({ type: 'ADD_PLAYER', payload: player });
         }
-    }, [dispatch]);
+    }, [dispatch, roomCode]);
 
-    const handleJoinGame = (e: React.FormEvent) => {
+    const handleJoinGame = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (playerName.trim() === '') return;
+        if (playerName.trim() === '' || !roomCode || !state.game) return;
 
-        const newPlayer: Player = {
-            id: `player_${Date.now()}`,
+        const newPlayer: Omit<Player, 'id' | 'game_id'> & { name: string } = {
             name: playerName,
-            avatar: `https://picsum.photos/seed/${Date.now()}/100`,
+            avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
             score: 0,
-            isOnline: true,
+            is_online: true,
         };
 
-        sessionStorage.setItem('quizPlayer', JSON.stringify(newPlayer));
-        setLocalPlayer(newPlayer);
-        dispatch({ type: 'ADD_PLAYER', payload: newPlayer });
+        const { data, error } = await supabase
+            .from('players')
+            .insert({ ...newPlayer, game_id: state.game.id })
+            .select();
+
+        if (error) {
+            console.error("Error joining game:", error);
+            return;
+        }
+
+        if (data && data.length > 0) {
+            const fullPlayer = data[0] as Player;
+            sessionStorage.setItem(`quizPlayer_${roomCode}`, JSON.stringify(fullPlayer));
+            setLocalPlayer(fullPlayer);
+            dispatch({ type: 'ADD_PLAYER', payload: fullPlayer });
+        }
     };
 
-    const handleLeaveGame = () => {
+    const handleLeaveGame = async () => {
         if (localPlayer) {
-            sessionStorage.removeItem('quizPlayer');
+            const { error } = await supabase
+                .from('players')
+                .delete()
+                .eq('id', localPlayer.id);
+
+            if (error) {
+                console.error("Error leaving game:", error);
+            }
+
+            sessionStorage.removeItem(`quizPlayer_${roomCode}`);
             dispatch({ type: 'REMOVE_PLAYER', payload: { playerId: localPlayer.id } });
             setLocalPlayer(null);
             setPlayerName('');

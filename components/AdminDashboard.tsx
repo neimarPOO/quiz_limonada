@@ -265,7 +265,36 @@ const AdminDashboard = () => {
 
                 {error && <div className="bg-red-500/20 text-red-300 p-4 rounded-lg mb-4">{error}</div>}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+import QRCode from "react-qr-code";
+
+const QRCodeDisplay = () => {
+    const { state } = useGame();
+    const { game } = state;
+
+    if (!game) return null;
+
+    const playerJoinURL = `${window.location.origin}${window.location.pathname}#/?roomCode=${game.room_code}`;
+
+    return (
+        <div className="bg-surface-dark rounded-xl p-6 flex flex-col items-center justify-center gap-4">
+            <p className="text-white text-2xl font-bold leading-tight tracking-tight">Entrada de Jogadores</p>
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+                <QRCode
+                    value={playerJoinURL}
+                    size={128}
+                    bgColor="#FFFFFF"
+                    fgColor="#1A1A2E"
+                    level="H"
+                />
+            </div>
+            <p className="text-white/80 text-center text-sm">Aponte a câmera para o QR Code para entrar!</p>
+            <p className="text-lg font-bold text-primary tracking-widest">{game.room_code}</p>
+        </div>
+    );
+};
+
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <QRCodeDisplay />
                     <div className="flex flex-col gap-8">
                         <div className="bg-surface-dark rounded-xl p-6 flex flex-col gap-6">
                              <div className="flex flex-col gap-1">

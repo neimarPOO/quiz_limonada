@@ -30,6 +30,14 @@ const gameReducer = (state: LocalGameState, action: GameAction): LocalGameState 
             return { ...state, isAdminAuthenticated: true };
         case 'SET_LOCAL_PLAYER_ID':
             return { ...state, localPlayerId: action.payload };
+        case 'ADD_PLAYER':
+            // Avoid adding duplicate players
+            if (state.players.find(p => p.id === action.payload.id)) {
+                return state;
+            }
+            return { ...state, players: [...state.players, action.payload] };
+        case 'REMOVE_PLAYER':
+            return { ...state, players: state.players.filter(p => p.id !== action.payload.playerId) };
         default:
             return state;
     }
@@ -47,12 +55,11 @@ const GameProvider = ({ children }: { children?: ReactNode }) => {
 
     // Effect to handle initial data fetch and Realtime subscriptions
     useEffect(() => {
-        const fetchInitialData = async () => {
-            // For simplicity, we'll assume a single game for now, or fetch by room_code
-            // In a real app, you'd fetch the specific game the user is trying to join
+        const fetchInitialData = async (roomCode: string) => {
             const { data: games, error: gameError } = await supabase
                 .from('games')
                 .select('*, players(*), questions(*), player_answers(*)')
+                .eq('room_code', roomCode)
                 .limit(1);
 
             if (gameError) {
@@ -69,29 +76,36 @@ const GameProvider = ({ children }: { children?: ReactNode }) => {
             }
         };
 
-        fetchInitialData();
+        const searchParams = new URLSearchParams(window.location.hash.split('?')[1]);
+        const roomCode = searchParams.get('roomCode');
+
+        if (roomCode) {
+            fetchInitialData(roomCode);
+        }
 
         // Setup Realtime subscriptions
-        gameChannel.current = supabase.channel('game_room')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'games' }, payload => {
-                console.log('Change received!', payload);
+        const channel = supabase.channel(`game_room_${roomCode || 'public'}`);
+
+        channel
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'games', filter: `room_code=eq.${roomCode}` }, payload => {
+                console.log('Game change received!', payload);
                 if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
                     dispatch({ type: 'SET_GAME', payload: payload.new as Game });
                 } else if (payload.eventType === 'DELETE') {
                     dispatch({ type: 'SET_GAME', payload: null });
                 }
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, payload => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `game_id=eq.${state.game?.id}` }, payload => {
                 console.log('Player change received!', payload);
                 if (payload.eventType === 'INSERT') {
-                    dispatch({ type: 'SET_PLAYERS', payload: [...state.players, payload.new as Player] });
+                    dispatch({ type: 'ADD_PLAYER', payload: payload.new as Player });
                 } else if (payload.eventType === 'UPDATE') {
                     dispatch({ type: 'SET_PLAYERS', payload: state.players.map(p => p.id === (payload.new as Player).id ? (payload.new as Player) : p) });
                 } else if (payload.eventType === 'DELETE') {
-                    dispatch({ type: 'SET_PLAYERS', payload: state.players.filter(p => p.id !== (payload.old as Player).id) });
+                    dispatch({ type: 'REMOVE_PLAYER', payload: { playerId: (payload.old as Player).id } });
                 }
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'questions' }, payload => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'questions', filter: `game_id=eq.${state.game?.id}` }, payload => {
                 console.log('Question change received!', payload);
                 if (payload.eventType === 'INSERT') {
                     dispatch({ type: 'SET_QUESTIONS', payload: [...state.questions, payload.new as Question] });
@@ -101,7 +115,7 @@ const GameProvider = ({ children }: { children?: ReactNode }) => {
                     dispatch({ type: 'SET_QUESTIONS', payload: state.questions.filter(q => q.id !== (payload.old as Question).id) });
                 }
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'player_answers' }, payload => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'player_answers', filter: `game_id=eq.${state.game?.id}` }, payload => {
                 console.log('Player Answer change received!', payload);
                 if (payload.eventType === 'INSERT') {
                     dispatch({ type: 'SET_PLAYER_ANSWERS', payload: [...state.playerAnswers, payload.new as PlayerAnswer] });
@@ -114,18 +128,20 @@ const GameProvider = ({ children }: { children?: ReactNode }) => {
             .subscribe();
 
         // Check for local player ID in session storage
-        const storedPlayer = sessionStorage.getItem('quizPlayer');
-        if (storedPlayer) {
-            const player = JSON.parse(storedPlayer);
-            dispatch({ type: 'SET_LOCAL_PLAYER_ID', payload: player.id });
+        if (roomCode) {
+            const storedPlayer = sessionStorage.getItem(`quizPlayer_${roomCode}`);
+            if (storedPlayer) {
+                const player = JSON.parse(storedPlayer);
+                dispatch({ type: 'SET_LOCAL_PLAYER_ID', payload: player.id });
+            }
         }
 
         return () => {
-            if (gameChannel.current) {
-                supabase.removeChannel(gameChannel.current);
+            if (channel) {
+                supabase.removeChannel(channel);
             }
         };
-    }, [state.players]); // Dependency on state.players to update player list correctly on changes
+    }, [state.game?.id]); // Re-run effect if game id changes
 
     return <GameContext.Provider value={{ state, dispatch }}>{children}</GameContext.Provider>;
 };

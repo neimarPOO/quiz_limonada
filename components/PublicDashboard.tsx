@@ -2,21 +2,34 @@
 import React from 'react';
 import { useGame } from '../App';
 import { GameStatus } from '../types';
+import QRCode from "react-qr-code";
 
 const PublicDashboard = () => {
     const { state } = useGame();
 
     const renderContent = () => {
-        switch (state.status) {
+        switch (state.game?.status) {
             case GameStatus.CONFIG:
             case GameStatus.WAITING:
+                const playerJoinURL = `${window.location.origin}${window.location.pathname}#/?roomCode=${state.game?.room_code}`;
                 return (
-                    <div className="text-center">
-                        <h1 className="text-6xl font-black text-white mb-4">Aguardando Início</h1>
-                        <p className="text-2xl text-white/70">O quiz começará em breve. Prepare-se!</p>
+                    <div className="text-center flex flex-col items-center justify-center">
+                        <h1 className="text-6xl font-black text-white mb-4">Entre no Jogo!</h1>
+                        <p className="text-2xl text-white/70 mb-8">Aponte a câmera do seu celular para o QR Code abaixo.</p>
+                        
+                        <div className="bg-white p-8 rounded-xl shadow-2xl">
+                            <QRCode
+                                value={playerJoinURL}
+                                size={256}
+                                bgColor="#FFFFFF"
+                                fgColor="#1A1A2E"
+                                level="H"
+                            />
+                        </div>
+
                         <div className="mt-12">
-                            <p className="text-xl text-white/80">Código da Sala:</p>
-                            <p className="text-5xl font-bold text-primary tracking-widest bg-black/20 px-6 py-2 rounded-lg mt-2">{state.roomCode}</p>
+                            <p className="text-xl text-white/80">Ou acesse pelo código:</p>
+                            <p className="text-5xl font-bold text-primary tracking-widest bg-black/20 px-6 py-2 rounded-lg mt-2">{state.game?.room_code}</p>
                         </div>
                     </div>
                 );
