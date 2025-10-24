@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, useContext, ReactNode, useEffect, useRef } from 'react';
-import { HashRouter, Routes, Route, Link } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { LocalGameState, GameAction, GameStatus, Game, Player, Question, PlayerAnswer } from './types';
 import AdminDashboard from './components/AdminDashboard';
 import PlayerView from './components/PlayerView';
@@ -51,9 +51,9 @@ export const useGame = () => useContext(GameContext);
 
 const GameProvider = ({ children }: { children?: ReactNode }) => {
     const [state, dispatch] = useReducer(gameReducer, initialState);
-    const gameChannel = useRef<any>(null);
+    const location = useLocation();
 
-    const searchParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    const searchParams = new URLSearchParams(location.search);
     const roomCode = searchParams.get('roomCode');
 
     // Effect to handle initial data fetch and Realtime subscriptions
@@ -156,20 +156,28 @@ const Nav = () => (
     </nav>
 );
 
-const App = () => {
+const AppRoutes = () => {
     const { state } = useGame();
 
     return (
-        <GameProvider>
-            <HashRouter>
-                <Nav />
-                <Routes>
-                    <Route path="/" element={<PlayerView />} />
-                    <Route path="/admin" element={state.isAdminAuthenticated ? <AdminDashboard /> : <AdminLogin />} />
-                    <Route path="/dashboard" element={<PublicDashboard />} />
-                </Routes>
-            </HashRouter>
-        </GameProvider>
+        <>
+            <Nav />
+            <Routes>
+                <Route path="/" element={<PlayerView />} />
+                <Route path="/admin" element={state.isAdminAuthenticated ? <AdminDashboard /> : <AdminLogin />} />
+                <Route path="/dashboard" element={<PublicDashboard />} />
+            </Routes>
+        </>
+    );
+}
+
+const App = () => {
+    return (
+        <HashRouter>
+            <GameProvider>
+                <AppRoutes />
+            </GameProvider>
+        </HashRouter>
     );
 };
 
