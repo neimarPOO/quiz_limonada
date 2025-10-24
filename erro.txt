@@ -1,2 +1,11 @@
-index-yiMPEZ3d.js:99 No room code provided!
-(anonymous)	@	index-yiMPEZ3d.js:99
+index-DxheUl3x.js:105 Uncaught ReferenceError: roomCode is not defined
+    at _S (index-DxheUl3x.js:105:18269)
+    at Ou (index-DxheUl3x.js:48:47988)
+    at Qu (index-DxheUl3x.js:48:70793)
+    at bd (index-DxheUl3x.js:48:81125)
+    at Jd (index-DxheUl3x.js:48:116876)
+    at Jp (index-DxheUl3x.js:48:115922)
+    at mo (index-DxheUl3x.js:48:115754)
+    at Vd (index-DxheUl3x.js:48:112552)
+    at ug (index-DxheUl3x.js:48:124344)
+    at MessagePort.Ze (index-DxheUl3x.js:25:1622)

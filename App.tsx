@@ -53,6 +53,9 @@ const GameProvider = ({ children }: { children?: ReactNode }) => {
     const [state, dispatch] = useReducer(gameReducer, initialState);
     const gameChannel = useRef<any>(null);
 
+    const searchParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    const roomCode = searchParams.get('roomCode');
+
     // Effect to handle initial data fetch and Realtime subscriptions
     useEffect(() => {
         const fetchInitialData = async (roomCode: string) => {
@@ -75,9 +78,6 @@ const GameProvider = ({ children }: { children?: ReactNode }) => {
                 dispatch({ type: 'SET_PLAYER_ANSWERS', payload: gameData.player_answers || [] });
             }
         };
-
-        const searchParams = new URLSearchParams(window.location.hash.split('?')[1]);
-        const roomCode = searchParams.get('roomCode');
 
         if (roomCode) {
             fetchInitialData(roomCode);
