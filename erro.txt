@@ -1,1 +1,2 @@
-index.css:1  Failed to load resource: the server responded with a status of 404 ()
+index-yiMPEZ3d.js:99 No room code provided!
+(anonymous)	@	index-yiMPEZ3d.js:99

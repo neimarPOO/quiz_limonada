@@ -141,7 +141,7 @@ const GameProvider = ({ children }: { children?: ReactNode }) => {
                 supabase.removeChannel(channel);
             }
         };
-    }, [state.game?.id]); // Re-run effect if game id changes
+    }, [state.game?.id, roomCode]); // Re-run effect if game id or roomCode changes
 
     return <GameContext.Provider value={{ state, dispatch }}>{children}</GameContext.Provider>;
 };
